@@ -6,25 +6,23 @@ const maxRedirects = require("./config").maxRedirects;
 const helpers = require("./helpers");
 const cookie = require("./cookie");
 const R = require("ramda");
+const zlib = require("zlib");
 
 // TODO: Consider promises
 const makeRequest = (opts, callback, callCount = 0) => {
   const[options, data] = opts;
 
-  // limit the number of consecutive redirects
   if (callCount > maxRedirects) {
     callback("Too many consecutive redirects", null);
     return;
   }
   
-  // parse cookie and return valid ones
   const handleCookies = res => {
     const uri = url.parse(res.headers.location);
     const cookies = R.concat(
       cookie.getCookie(res.req.hostname) || [],
       res.headers["set-cookie"]          || []
     );
-
     const validate = R.compose(
       cookie.selectPath(uri.path),
       cookie.selectDomain(uri.hostname),
@@ -37,7 +35,6 @@ const makeRequest = (opts, callback, callCount = 0) => {
     return cookie.nameVal(validCookies).join(";");
   };
 
-  // redirect on 302 status code
   const redirectGet = res => {
     const opts = R.merge(
       helpers.parseUri(res.headers.location), 
@@ -47,10 +44,7 @@ const makeRequest = (opts, callback, callCount = 0) => {
     makeRequest([opts, null], callback, callCount + 1);
   };
 
-  // decode content, or just return it if not encoded
   const decode = res => {
-    const zlib = require("zlib");
-
     switch (res.headers["content-encoding"]) {
     case "gzip":
       return zlib.gunzipSync(res.body);
@@ -61,7 +55,6 @@ const makeRequest = (opts, callback, callCount = 0) => {
     }
   };
 
-  // check status code and act accordingly
   const handleResponse = res => {
     const decodedResponse = R.merge(
       res, 
@@ -79,7 +72,6 @@ const makeRequest = (opts, callback, callCount = 0) => {
     }
   };
 
-  // initialize request
   const req = require(options.protocol).request(options, res => {
     let body = [];
 

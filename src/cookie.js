@@ -1,19 +1,12 @@
-/*
- * Cookie parser module
- * Designed by Dmitry Lukashevich a.k.a Dembel
- * ludn2@mail.ru
-*/
 "use strict";
 const fs = require("fs");
 const path = require("path");
 const R = require("ramda");
-/********************* private stuff ********************/
-/********************************************************/
-// [String] -> [String]
+const cookieDir = path.join("src", "cookies");
+
 // remove leading dot in Domain attribute value
 const dotFree = cookie => cookie.map(val => val.replace("omain=.", "omain="));
 
-// [String] -> [String]
 // filter out dublicates
 const rmDublicates = cookie => {
   const filtered = cookie.reduceRight((acc, val) => {
@@ -24,7 +17,6 @@ const rmDublicates = cookie => {
   return cookie.filter(val => filtered.includes(val));
 };
 
-// [String] -> [String]
 // filter out expired cookie
 const rmExpired = cookie => {
   const timestamp = new Date().getTime();
@@ -34,14 +26,11 @@ const rmExpired = cookie => {
     return expires ? new Date(expires).getTime() >= timestamp : true;
   });
 };
-/************************************************************/
-/********************* private stuff end ********************/
 
 const nameVal = cookie => cookie.map(val => val.split(";")[0]);
 const secure = cookie => cookie.filter(val => val.includes("Secure"));
 const notSecure = cookie => cookie.filter(val => !val.includes("Secure"));
 
-// String -> [String] -> [String]
 // filter cookie with specific domain
 const selectDomain = (origDomain, cookie) => 
   cookie.filter(val => {
@@ -53,7 +42,6 @@ const selectDomain = (origDomain, cookie) =>
       new RegExp(".*" + coverDomain, "i").test(origDomain);
   });
 
-// String -> [String] -> [String]
 // filter cookie with specific path
 const selectPath = (path, cookie) => 
   cookie.filter(val => {
@@ -64,36 +52,34 @@ const selectPath = (path, cookie) =>
     return new RegExp(cookiePath + ".*", "i").test(path);
   });
 
-// String -> [String] -> [String]
 // set domain with :coverNull flag for cookies without Domain directive
 const setDomain = (origDomain, cookie) =>
   cookie.map(val => !val.toLowerCase().includes("domain=") ?
     val.concat("; domain=", origDomain, ":coverNull") : val);
 
-// String -> [String]
 const getCookie = domain => {
-  const cookieFile = path.join(__dirname, "cookies", domain);
+  const cookieFile = path.join("src", "cookies", domain);
   
   return fs.existsSync(cookieFile) ?
   fs.readFileSync(cookieFile).toString().split("*****") : [];
 };
 
-// String -> [String] -> ()
 const saveCookie = (domain, cookie) => {
-  const cookieFile = path.join(__dirname, "cookies", domain);
+  const cookieFile = path.join("src", "cookies", domain);
 
-    if (fs.existsSync(path.join(__dirname, "cookies")) && cookie.length) {
+    if (fs.existsSync(path.join("src", "cookies")) && cookie.length) {
     fs.writeFileSync(cookieFile, cookie.join("*****"));
   } else if (cookie.length) {
-    fs.mkdirSync(path.join(__dirname, "cookies"));
+    fs.mkdirSync(path.join("src", "cookies"));
     fs.writeFileSync(cookieFile, cookie.join("*****"));
   }
 };
 
-// clearCookie :: ()
 const clearCookie = () => {
-  const cookieDir = path.join(__dirname, "cookies");
-    
+  if (!fs.existsSync(cookieDir)) {
+    fs.mkdirSync(cookieDir);
+  }
+
   fs.readdir(cookieDir, (err, files) => {
     files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
   });

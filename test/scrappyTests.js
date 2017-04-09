@@ -18,6 +18,7 @@ describe("Scrappy tests", function () {
         foo: 200,
         bar: "foobar"
       });
+
       scrappy.get("http://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -34,6 +35,7 @@ describe("Scrappy tests", function () {
         foobar: 200,
         barfoo: "foobar"
       });
+
       scrappy.get("http://gettest.com/foobar/bar", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -50,6 +52,7 @@ describe("Scrappy tests", function () {
         foobar: 200,
         https: "https"
       });
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -66,6 +69,7 @@ describe("Scrappy tests", function () {
         foob: 200,
         https: "https"
       });
+
       scrappy.get("https://gettest.com/foobar/bar", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -83,6 +87,7 @@ describe("Scrappy tests", function () {
         foob: 200,
         https: "https"
       });
+
       scrappy.get("https://gettest.com/foo?name=John&surname=Dough",
       (err, res) => {
         /* jshint ignore:start */
@@ -102,6 +107,7 @@ describe("Scrappy tests", function () {
         foob: 200,
         https: "https"
       });
+
       scrappy.get("https://gettest.com/?name=John&surname=Dough", 
       (err, res) => {
         /* jshint ignore:start */
@@ -121,6 +127,7 @@ describe("Scrappy tests", function () {
         foo: 2004,
         http: "http"
       });
+
       scrappy.get("https://gettest.com/foo#start", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -139,6 +146,7 @@ describe("Scrappy tests", function () {
         foo: 2004,
         http: "http"
       });
+
       scrappy.get("https://gettest.com/#start", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -156,6 +164,7 @@ describe("Scrappy tests", function () {
         foob: 200,
         https: "https"
       });
+
       scrappy.get("https://gettest.com/foobar/bar", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -170,6 +179,7 @@ describe("Scrappy tests", function () {
     it("should correctly send request and have statusCodeMessage prop\n\t" +
     "with correct message in res object", function (done) {
       nock("https://gettest.com").get("/foobar/bar").reply(404);
+
       scrappy.get("https://gettest.com/foobar/bar", (err, res) => {
         expect(res.statusCode).to.equal(404);
         /* jshint ignore:start */
@@ -187,6 +197,7 @@ describe("Scrappy tests", function () {
         foo: 2004,
         http: "http"
       });
+
       scrappy.get("https://gettest.com:8080/#start", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -212,7 +223,9 @@ describe("Scrappy tests", function () {
     it("should correctly send post request and get response back",
     function (done) {
       const postData = { name: "John", surname: "Dough" };
+
       nock("http://posttest.com").post("/", postData).reply(403);
+
       scrappy.post("http://posttest.com", postData, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -229,7 +242,9 @@ describe("Scrappy tests", function () {
     it("should correctly send post request and get response back",
     function (done) {
       const postData = { name: "John", surname: "Dough" };
+
       nock("http://posttest.com").post("/foobar", postData).reply(200, "Hello");
+
       scrappy.post("http://posttest.com/foobar", postData, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -248,6 +263,7 @@ describe("Scrappy tests", function () {
         fb: 200,
         hps: "https"
       });
+
       scrappy.post("https://posttest.com/foo?name=John&surname=Dough", 
       postData, (err, res) => {
         /* jshint ignore:start */
@@ -268,6 +284,7 @@ describe("Scrappy tests", function () {
         b: 200,
         h: "https"
       });
+
       scrappy.post("https://posttest.com/?name=John&surname=Dough", 
       postData, (err, res) => {
         /* jshint ignore:start */
@@ -288,6 +305,7 @@ describe("Scrappy tests", function () {
         foo: 2004,
         http: "http"
       });
+
       scrappy.post("https://posttest.com/foo#start", postData, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -307,6 +325,7 @@ describe("Scrappy tests", function () {
         oo: 2004,
         ttp: "http"
       });
+
       scrappy.post("https://posttest.com/#start", postData, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -325,6 +344,7 @@ describe("Scrappy tests", function () {
         foo: 2004,
         http: "http"
       });
+
       scrappy.post("https://posttest.com:8080/#start", {}, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -352,6 +372,7 @@ describe("Scrappy tests", function () {
         location: "http://redirectedget.com"
       });
       nock("http://redirectedget.com").get("/").reply(200, "Redirect");
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -368,6 +389,7 @@ describe("Scrappy tests", function () {
         location: "http://redirectedget.com"
       });
       nock("http://redirectedget.com").get("/").reply(200, "Redirect");
+
       scrappy.post("https://posttest.com", {}, (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -387,6 +409,7 @@ describe("Scrappy tests", function () {
         location: "http://redirectedget.com"
       });
       nock("http://redirectedget.com").get("/").reply(200, "Redirect");
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -403,6 +426,7 @@ describe("Scrappy tests", function () {
       nock("https://gettest.com").get("/").times(11).reply(302, "", {
         location: "https://gettest.com"
       });
+
       scrappy.get("https://gettest.com", err => {
         expect(err).to.equal("Too many consecutive redirects");
         done();
@@ -420,12 +444,14 @@ describe("Scrappy tests", function () {
         "bar=foobar; path=/",
         "barfoo=foo"
       ];
+
       nock("https://gettest.com").get("/").reply(302, "", {
         "set-cookie": cookie,
         "location": "https://gettest.com/redirected"
 
       });
       nock("https://gettest.com").get("/redirected").reply(200, "Redirect");
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -445,12 +471,14 @@ describe("Scrappy tests", function () {
         "bar=foobar; path=/",
         "barfoo=foo"
       ];
+
       nock("https://gettest.com").get("/").reply(302, "", {
         "set-cookie": cookie,
         "location": "https://gettestred.com"
 
       });
       nock("https://gettestred.com").get("/").reply(200, "Redirect");
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -470,12 +498,14 @@ describe("Scrappy tests", function () {
         "bar=foobar; path=/redirected",
         "barfoo=foo"
       ];
+
       nock("https://gettestred.com").get("/").reply(302, "", {
         "set-cookie": cookie,
         "location": "https://gettestred.com"
 
       });
       nock("https://gettestred.com").get("/").reply(200, "Redirect");
+
       scrappy.get("https://gettestred.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
@@ -495,6 +525,7 @@ describe("Scrappy tests", function () {
         "bar=foobar;Domain=gettest.com;path=/",
         "barfoo=foo"
       ];
+
       nock("https://gettest.com").get("/").reply(302, "", {
         "set-cookie": cookie,
         "location": "https://gettest.com/redone"
@@ -506,6 +537,7 @@ describe("Scrappy tests", function () {
 
       });
       nock("https://gettest.com").get("/red2").reply(200, "Red");
+
       scrappy.get("https://gettest.com", (err, res) => {
         /* jshint ignore:start */
         expect(err).to.not.exist;
