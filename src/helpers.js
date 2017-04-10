@@ -37,7 +37,7 @@ const parseUri = uri => {
   const parsedUri = url.parse(uri);
 
   return {
-    protocol: parsedUri.protocol.replace(":", ""), 
+    protocol: parsedUri.protocol, 
     hostname: parsedUri.hostname, 
     path: parsedUri.hash ? parsedUri.path + parsedUri.hash : parsedUri.path,
     port: parsedUri.port || ""

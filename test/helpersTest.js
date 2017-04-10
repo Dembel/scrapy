@@ -13,7 +13,7 @@ describe("Helpers tests", function () {
         const uri = "http://www.foo.com:40/bar";
         const result = helpers.parseUri(uri);
           
-        expect(result.protocol).to.equal("http");
+        expect(result.protocol).to.equal("http:");
         expect(result.hostname).to.equal("www.foo.com");
         expect(result.path).to.equal("/bar");
         expect(result.port).to.equal("40");
@@ -24,7 +24,7 @@ describe("Helpers tests", function () {
         const uri = "http://foobar.com/barfoo";
         const result = helpers.parseUri(uri);
 
-        expect(result.protocol).to.equal("http");
+        expect(result.protocol).to.equal("http:");
         expect(result.hostname).to.equal("foobar.com");
         expect(result.path).to.equal("/barfoo");
         expect(result.port).to.equal("");
@@ -35,7 +35,7 @@ describe("Helpers tests", function () {
         const uri = "https://bar.com";
         const result = helpers.parseUri(uri);
 
-        expect(result.protocol).to.equal("https");
+        expect(result.protocol).to.equal("https:");
         expect(result.hostname).to.equal("bar.com");
         expect(result.path).to.equal("/");
         expect(result.port).to.equal("");
@@ -46,7 +46,7 @@ describe("Helpers tests", function () {
         const uri = "https://bar.com:443/bar?foo=bar&bar=foo#foobar";
         const result = helpers.parseUri(uri);
 
-        expect(result.protocol).to.equal("https");
+        expect(result.protocol).to.equal("https:");
         expect(result.hostname).to.equal("bar.com");
         expect(result.path).to.equal("/bar?foo=bar&bar=foo#foobar");
         expect(result.port).to.equal("443");

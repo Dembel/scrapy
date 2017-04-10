@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const R = require("ramda");
-const cookieDir = path.join("src", "cookies");
+const cookieDir = path.join(__dirname, "cookies");
 
 // remove leading dot in Domain attribute value
 const dotFree = cookie => cookie.map(val => val.replace("omain=.", "omain="));
@@ -58,19 +58,19 @@ const setDomain = (origDomain, cookie) =>
     val.concat("; domain=", origDomain, ":coverNull") : val);
 
 const getCookie = domain => {
-  const cookieFile = path.join("src", "cookies", domain);
+  const cookieFile = path.join(__dirname, "cookies", domain);
   
   return fs.existsSync(cookieFile) ?
   fs.readFileSync(cookieFile).toString().split("*****") : [];
 };
 
 const saveCookie = (domain, cookie) => {
-  const cookieFile = path.join("src", "cookies", domain);
+  const cookieFile = path.join(__dirname, "cookies", domain);
 
-    if (fs.existsSync(path.join("src", "cookies")) && cookie.length) {
+    if (fs.existsSync(path.join(__dirname, "cookies")) && cookie.length) {
     fs.writeFileSync(cookieFile, cookie.join("*****"));
   } else if (cookie.length) {
-    fs.mkdirSync(path.join("src", "cookies"));
+    fs.mkdirSync(path.join(__dirname, "cookies"));
     fs.writeFileSync(cookieFile, cookie.join("*****"));
   }
 };

@@ -72,7 +72,7 @@ const makeRequest = (opts, callback, callCount = 0) => {
     }
   };
 
-  const req = require(options.protocol).request(options, res => {
+  const req = require(options.protocol.replace(":", "")).request(options, res => {
     let body = [];
 
     res.on("data", data => {
