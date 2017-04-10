@@ -34,10 +34,11 @@ const log = res => {
 };
 
 const parseUri = uri => {
-  const parsedUri = url.parse(uri);
+  const correctedUri = uri.includes("://") ? uri : "http://" + uri;
+  const parsedUri = url.parse(correctedUri);
 
   return {
-    protocol: parsedUri.protocol, 
+    protocol: parsedUri.protocol === "https:" ? "https:" : "http:",
     hostname: parsedUri.hostname, 
     path: parsedUri.hash ? parsedUri.path + parsedUri.hash : parsedUri.path,
     port: parsedUri.port || ""

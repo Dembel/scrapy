@@ -21,6 +21,17 @@ describe("Helpers tests", function () {
 
     it("should correctly extract protocol, host, path and port from uri string",
       function () {
+        const uri = "foo.com:40/bar";
+        const result = helpers.parseUri(uri);
+          
+        expect(result.protocol).to.equal("http:");
+        expect(result.hostname).to.equal("foo.com");
+        expect(result.path).to.equal("/bar");
+        expect(result.port).to.equal("40");
+    });
+
+    it("should correctly extract protocol, host, path and port from uri string",
+      function () {
         const uri = "http://foobar.com/barfoo";
         const result = helpers.parseUri(uri);
 

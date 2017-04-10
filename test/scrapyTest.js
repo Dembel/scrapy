@@ -46,23 +46,6 @@ describe("Scrapy tests", function () {
       });
     });
 
-    it("should correctly send http request if protocol is missing in URI",
-    function (done) {
-      nock("http://gettest.com").get("/foobar/bar").reply(200, {
-        foobar: 200,
-        barfoo: "foobar"
-      });
-
-      scrapy.get("gettest.com/foobar/bar", (err, res) => {
-        /* jshint ignore:start */
-        expect(err).to.not.exist;
-        /* jshint ignore:end */
-        expect(res.statusCode).to.equal(200);
-        expect(JSON.parse(res.body)).to.have.all.keys("foobar", "barfoo");
-        done();
-      });
-    });
-
     it("should correctly send https request and get response back",
     function (done) {
       nock("https://gettest.com").get("/").reply(200, {
