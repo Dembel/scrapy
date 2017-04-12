@@ -76,24 +76,7 @@ describe("Helpers tests", function () {
     });
 
     it("should save GET request log into a file", function () {
-      const res = { 
-        req: { 
-          hostname: "foobar.com",
-          method: "GET",
-          path: "/foobar",
-          protocol: "http",
-          headers: {},
-          data: "barfoofoobar"
-        },
-        statusCode: 200,
-        headers: {},
-        body: "barfoo"
-      };
-      const logContent = new Date().toUTCString() + 
-        "\nGET /foobar HTTP/1.1\nStatus code: 200 OK\n\n" +
-        "Request headers:\n{}\n\nRequest data:\n\"barfoofoobar\"\n\n" +
-        "Response headers:\n{}\n\nbarfoo\n\n" +
-        "============================================================\n\n";
+      const res = { req: { hostname: "foobar.com" } };
       const writeFileStub = this.sandbox.stub(
         fs, 
         "writeFile"
@@ -102,29 +85,11 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/foobar.com.log", 
-        logContent, {flag: "a"});
+      sinon.assert.calledWith(writeFileStub, "src/logs/foobar.com.log");
     });
 
     it("should save POST request log into a file", function () {
-      const res = { 
-        req: { 
-          hostname: "bar.com",
-          method: "POST",
-          path: "/foobar",
-          protocol: "https",
-          headers: {},
-          data: "bar"
-        },
-        statusCode: 404,
-        headers: {},
-        body: ""
-      };
-      const logContent = new Date().toUTCString() + 
-        "\nPOST /foobar HTTPS\nStatus code: 404 Not Found\n\n" +
-        "Request headers:\n{}\n\nRequest data:\n\"bar\"\n\n" +
-        "Response headers:\n{}\n\n\n\n" +
-        "============================================================\n\n";
+      const res = { req: { hostname: "bar.com" } };
       const writeFileStub = this.sandbox.stub(
         fs, 
         "writeFile"
@@ -133,29 +98,11 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log", 
-        logContent, {flag: "a"});
+      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log");
     });
 
     it("should save POST request log into a file", function () {
-      const res = { 
-        req: { 
-          hostname: "bar.com",
-          method: "POST",
-          path: "",
-          protocol: "https",
-          headers: {},
-          data: "bar"
-        },
-        statusCode: 404,
-        headers: {},
-        body: ""
-      };
-      const logContent = new Date().toUTCString() + 
-        "\nPOST / HTTPS\nStatus code: 404 Not Found\n\n" +
-        "Request headers:\n{}\n\nRequest data:\n\"bar\"\n\n" +
-        "Response headers:\n{}\n\n\n\n" +
-        "============================================================\n\n";
+      const res = { req: { hostname: "bar.com" } };
       const writeFileStub = this.sandbox.stub(
         fs, 
         "writeFile"
@@ -164,8 +111,7 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log", 
-        logContent, {flag: "a"});
+      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log");
     });
 
   });

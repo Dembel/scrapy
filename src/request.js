@@ -1,5 +1,4 @@
 "use strict";
-const url = require("url");
 const logger = require("./logger");
 const statusCodes = require("./config").statusCodes;
 const maxRedirects = require("./config").maxRedirects;
@@ -10,68 +9,12 @@ const zlib = require("zlib");
 
 // TODO: Consider promises
 const makeRequest = (opts, callback, callCount = 0) => {
-  const[options, data] = opts;
-
-  if (callCount > maxRedirects) {
-    callback("Too many consecutive redirects", null);
-    return;
-  }
+  let[options, data] = opts;
+  const uri = options.protocol.concat("//",options.hostname, options.path);
+  const reqCookie = cookie.getCookie(uri);
   
-  const handleCookies = res => {
-    const uri = url.parse(res.headers.location);
-    const cookies = R.concat(
-      cookie.getCookie(res.req.hostname) || [],
-      res.headers["set-cookie"]          || []
-    );
-    const validate = R.compose(
-      cookie.selectPath(uri.path),
-      cookie.selectDomain(uri.hostname),
-      cookie.setDomain(res.req.hostname),
-      cookie.parse
-    );
-    const validCookies = validate(cookies);
-
-    cookie.saveCookie(res.req.hostname, validCookies);
-    return cookie.nameVal(validCookies).join(";");
-  };
-
-  const redirectGet = res => {
-    const opts = R.merge(
-      helpers.parseUri(res.headers.location), 
-      { cookie: handleCookies(res) }
-    );
-
-    makeRequest([opts, null], callback, callCount + 1);
-  };
-
-  const decode = res => {
-    switch (res.headers["content-encoding"]) {
-    case "gzip":
-      return zlib.gunzipSync(res.body);
-    case "deflate":
-      return zlib.inflateSync(res.body);
-    default:
-      return res.body.toString();
-    }
-  };
-
-  const handleResponse = res => {
-    const decodedResponse = R.merge(
-      res, 
-      { body: decode(res) }
-    );
-
-    switch (res.statusCode) {
-    case 302:
-      redirectGet(decodedResponse);
-      break;
-    default:
-      cookie.clearCookie();
-      callback(null, decodedResponse);
-      break;
-    }
-  };
-
+  options.headers.cookie = cookie.nameVal(reqCookie).join(";");
+  
   const req = require(options.protocol.replace(":", "")).request(options, res => {
     let body = [];
 
@@ -97,6 +40,65 @@ const makeRequest = (opts, callback, callCount = 0) => {
   req.on("error", err => {
     logger.info(err);
   });
+
+  function handleResponse(res) {
+    const decodedResponse = R.merge(
+      res, 
+      { body: decode(res) }
+    );
+    
+    handleCookies(res);
+    switch (res.statusCode) {
+    case 302:
+      redirectGet(decodedResponse);
+      break;
+    default:
+      callback(null, decodedResponse);
+      break;
+    }
+  }
+
+  function decode(res) {
+    switch (res.headers["content-encoding"]) {
+    case "gzip":
+      return zlib.gunzipSync(res.body);
+    case "deflate":
+      return zlib.inflateSync(res.body);
+    default:
+      return res.body.toString();
+    }
+  }
+
+  function handleCookies(res) {
+    const cookies = R.concat(reqCookie, res.headers["set-cookie"] || []);
+    const cleanedCookies = cookie.setDomain(res.req.hostname, cookie.parse(cookies));
+    const domains = cleanedCookies.map(
+      val => val.match(/domain=(.*);|domain=(.*)$/i)[1]
+    );
+
+    R.uniq(domains).forEach(val => {
+      const filteredCookies = cleanedCookies.filter(
+        cval => cval.toLowerCase().includes("domain=" + val + ";"));
+
+      cookie.saveCookie(val, filteredCookies);
+    });
+  }
+  
+  function redirectGet(res) {
+    const headers = require("./config").defaultHeaders;
+    const opts = R.merge(
+      helpers.parseUri(res.headers.location), 
+      { headers: headers }
+    );
+
+    if (callCount + 1 > maxRedirects) {
+      callback("Too many consecutive redirects", null);
+      return;
+    }
+
+    makeRequest([opts, null], callback, callCount + 1);
+  }
+
 };
 
 module.exports = makeRequest;

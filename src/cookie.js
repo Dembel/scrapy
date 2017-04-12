@@ -2,12 +2,12 @@
 const fs = require("fs");
 const path = require("path");
 const R = require("ramda");
+const url = require("url");
 const cookieDir = path.join(__dirname, "cookies");
 
 // remove leading dot in Domain attribute value
 const dotFree = cookie => cookie.map(val => val.replace("omain=.", "omain="));
 
-// filter out dublicates
 const rmDublicates = cookie => {
   const filtered = cookie.reduceRight((acc, val) => {
     return acc.some(accVal => accVal.indexOf(val.split("=")[0] + "=") === 0) ?
@@ -17,7 +17,6 @@ const rmDublicates = cookie => {
   return cookie.filter(val => filtered.includes(val));
 };
 
-// filter out expired cookie
 const rmExpired = cookie => {
   const timestamp = new Date().getTime();
 
@@ -31,37 +30,44 @@ const nameVal = cookie => cookie.map(val => val.split(";")[0]);
 const secure = cookie => cookie.filter(val => val.includes("Secure"));
 const notSecure = cookie => cookie.filter(val => !val.includes("Secure"));
 
-// filter cookie with specific domain
-const selectDomain = (origDomain, cookie) => 
+const selectDomain = R.curry((origDomain, cookie) => 
   cookie.filter(val => {
-    const domainDir = val.match(/domain=.*;|domain=.*$/i);
+    const domainDir = val.match(/domain=.*?;|domain=.*$/i);
     const coverDomain = domainDir ?
       domainDir[0].replace(/domain=|;/ig, "") : "";
  
     return val.includes("domain=" + origDomain + ":coverNull") ||
       new RegExp(".*" + coverDomain, "i").test(origDomain);
-  });
+}));
 
-// filter cookie with specific path
-const selectPath = (path, cookie) => 
+const selectPath = R.curry((path, cookie) => 
   cookie.filter(val => {
-    const pathDir = val.match(/path=\/.*;|path=\/.*$/i);
+    const pathDir = val.match(/path=\/.*?;|path=\/.*$/i);
     const cookiePath = pathDir ? 
-      pathDir[0].replace(/path=|;|\/$/ig, "") : "/";
+      pathDir[0].replace(/path=|;|$/ig, "") : "/";
 
     return new RegExp(cookiePath + ".*", "i").test(path);
-  });
+}));
 
-// set domain with :coverNull flag for cookies without Domain directive
+// set domain with ;coverNull flag for cookies without Domain directive
 const setDomain = (origDomain, cookie) =>
   cookie.map(val => !val.toLowerCase().includes("domain=") ?
-    val.concat("; domain=", origDomain, ":coverNull") : val);
+    val.concat(";domain=", origDomain, ";coverNull") : val);
 
-const getCookie = domain => {
-  const cookieFile = path.join(__dirname, "cookies", domain);
+const readAllCookie = () => fs.readdirSync(cookieDir);
+
+const getCookie = uri => {
+  const uriStr = url.parse(uri);
+  const domain = uriStr.hostname;
+  const uriPath = uriStr.path;
+  const cookieFiles = readAllCookie().filter(
+    val => new RegExp("(.+\.)*" + domain + "$").test(val)
+  );
   
-  return fs.existsSync(cookieFile) ?
-  fs.readFileSync(cookieFile).toString().split("*****") : [];
+  return selectPath(uriPath, R.flatten(cookieFiles.map(val => val === domain ? 
+    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****") :
+    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****").
+      filter(val => !val.includes("coverNull")))));
 };
 
 const saveCookie = (domain, cookie) => {
@@ -84,6 +90,17 @@ const clearCookie = () => {
     files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
   });
 };
+  
+const fetchValidCookies = uri => {
+  const uriStr = url.parse(uri);
+  const validate = R.compose(
+    selectPath(uriStr.path),
+    selectDomain(uriStr.hostanme),
+    parseCookie      
+  );
+
+  return validate(getCookie(uriStr.hostname) || []);
+};
 
 const parseCookie = R.compose(
   dotFree,
@@ -101,5 +118,7 @@ module.exports = {
   setDomain: R.curry(setDomain),
   getCookie: getCookie,
   saveCookie: R.curry(saveCookie),
-  clearCookie: clearCookie
+  clearCookie: clearCookie,
+  fetchValidCookies: fetchValidCookies,
+  readAllCookie: readAllCookie
 };

@@ -325,9 +325,9 @@ describe("Cookie parser tests", function () {
       ];
       expect(cookie.setDomain("bar.foobar.foo.com", input)).to.eql([
         "foobarf=foo; Domain=bar.ru; path=/",
-        "foo=barfo; domain=bar.foobar.foo.com:coverNull",
+        "foo=barfo;domain=bar.foobar.foo.com;coverNull",
         "foobar=bar; path=/; domain=barfoo.com",
-        "barr=fobar; domain=bar.foobar.foo.com:coverNull"
+        "barr=fobar;domain=bar.foobar.foo.com;coverNull"
       ]);
     });
 

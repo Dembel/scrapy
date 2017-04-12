@@ -3,6 +3,7 @@ const nock = require("nock");
 const chai = require("chai");
 const expect = chai.expect;
 const scrapy = require("../src/scrapy");
+const cookie = require("../src/cookie");
 
 describe("Scrapy tests", function () {
 
@@ -437,6 +438,10 @@ describe("Scrapy tests", function () {
 
   describe("Set-Cookie header tests" , function () {
   
+    afterEach(function () {
+      cookie.clearCookie();
+    });
+
     it("should correctly send request and set cookie passed from server", 
     function (done) {
       const cookie = [
@@ -459,7 +464,9 @@ describe("Scrapy tests", function () {
         expect(res.statusCode).to.equal(200);
         expect(res.body).to.equal("Redirect");
         expect(res.statusCodeMessage).to.equal("OK");
-        expect(res.req.cookie).to.equal("foobar=bar;bar=foobar;barfoo=foo");
+        expect(res.req.headers.cookie).to.equal(
+          "foobar=bar;bar=foobar;barfoo=foo"
+        );
         done();
       });
     });
@@ -468,6 +475,35 @@ describe("Scrapy tests", function () {
     function (done) {
       const cookie = [
         "foobar=bar; Expires=Fri, 29 Dec 9999 09:11:31 GMT",
+        "bar=foobar; path=/",
+        "barfoo=foo"
+      ];
+
+      nock("https://gettest.com").get("/").reply(302, "", {
+        "set-cookie": cookie,
+        "location": "https://gettest.com/redirected"
+
+      });
+      nock("https://gettest.com").get("/redirected").reply(200, "Redirect");
+
+      scrapy.get("https://gettest.com", (err, res) => {
+        /* jshint ignore:start */
+        expect(err).to.not.exist;
+        /* jshint ignore:end */
+        expect(res.statusCode).to.equal(200);
+        expect(res.body).to.equal("Redirect");
+        expect(res.statusCodeMessage).to.equal("OK");
+        expect(res.req.headers.cookie).to.equal(
+          "foobar=bar;bar=foobar;barfoo=foo"
+        );
+        done();
+      });
+    });
+
+    it("should correctly send request and set cookie passed from server", 
+    function (done) {
+      const cookie = [
+        "foobar=bar; domain=gettest.com;Expires=Fri, 29 Dec 9999 09:11:31 GMT",
         "bar=foobar; path=/",
         "barfoo=foo"
       ];
@@ -486,7 +522,7 @@ describe("Scrapy tests", function () {
         expect(res.statusCode).to.equal(200);
         expect(res.body).to.equal("Redirect");
         expect(res.statusCodeMessage).to.equal("OK");
-        expect(res.req.cookie).to.equal("");
+        expect(res.req.headers.cookie).to.equal("");
         done();
       });
     });
@@ -513,7 +549,7 @@ describe("Scrapy tests", function () {
         expect(res.statusCode).to.equal(200);
         expect(res.body).to.equal("Redirect");
         expect(res.statusCodeMessage).to.equal("OK");
-        expect(res.req.cookie).to.equal("foobar=bar;barfoo=foo");
+        expect(res.req.headers.cookie).to.equal("foobar=bar;barfoo=foo");
         done();
       });
     });
@@ -545,7 +581,7 @@ describe("Scrapy tests", function () {
         expect(res.statusCode).to.equal(200);
         expect(res.body).to.equal("Red");
         expect(res.statusCodeMessage).to.equal("OK");
-        expect(res.req.cookie).to.equal("bar=foobar;barfoo=foo");
+        expect(res.req.headers.cookie).to.equal("bar=foobar;barfoo=foo");
         done();
       });
     });

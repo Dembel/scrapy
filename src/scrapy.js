@@ -4,15 +4,6 @@ const makeRequest = require("./request");
 const helpers = require("./helpers");
 const R = require("ramda");
 
-const request = (opts, callback) => {
-  const [options, data] = opts;
-  const headers = R.merge(require("./config").defaultHeaders, options.headers);
-  const reqOpts = R.merge(options, { headers: headers });
-
-  makeRequest([reqOpts, data], (err, res) => callback(err, res));
-};
-
-// ==================== request methods ====================
 const get = (uriStr, callback) => {
   const opts = helpers.parseUri(uriStr);
 
@@ -32,6 +23,14 @@ const post = (uriStr, data, callback) => {
 
   request([opts, reqData], (err, res) => callback(err, res));
 };
+
+function request(opts, callback) {
+  const [options, data] = opts;
+  const headers = R.merge(require("./config").defaultHeaders, options.headers);
+  const reqOpts = R.merge(options, { headers: headers });
+
+  makeRequest([reqOpts, data], (err, res) => callback(err, res));
+}
 
 module.exports = {
   get: get,

@@ -4,7 +4,7 @@
   "description": "web scraping package for node",
   "main": "./src/scraper.js",
   "scripts": {
-    "test": "nyc mocha",
+    "test": "mocha",
     "build": "jshint src/*.js test/*.js && nyc mocha"
   },
   "author": "Dmitry Lukashevich",
