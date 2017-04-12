@@ -54,7 +54,13 @@ const setDomain = (origDomain, cookie) =>
   cookie.map(val => !val.toLowerCase().includes("domain=") ?
     val.concat(";domain=", origDomain, ";coverNull") : val);
 
-const readAllCookie = () => fs.readdirSync(cookieDir);
+const readAllCookie = () => {
+  if (!fs.existsSync(cookieDir)) { 
+    fs.mkdirSync(cookieDir);
+  }
+
+  return fs.readdirSync(cookieDir);
+};
 
 const getCookie = uri => {
   const uriStr = url.parse(uri);
@@ -63,7 +69,7 @@ const getCookie = uri => {
   const cookieFiles = readAllCookie().filter(
     val => new RegExp("(.+\.)*" + domain + "$").test(val)
   );
-  
+
   return selectPath(uriPath, R.flatten(cookieFiles.map(val => val === domain ? 
     fs.readFileSync(path.join(cookieDir, val)).toString().split("*****") :
     fs.readFileSync(path.join(cookieDir, val)).toString().split("*****").
