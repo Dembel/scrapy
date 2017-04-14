@@ -5,7 +5,6 @@ const R = require("ramda");
 const url = require("url");
 const cookieDir = path.join(__dirname, "cookies");
 
-// remove leading dot in Domain attribute value
 const rmLeadingDot = cookie => cookie.map(val => val.replace("omain=.", "omain="));
 
 const rmDublicates = cookie => {
@@ -30,7 +29,7 @@ const nameVal = cookie => cookie.map(val => val.split(";")[0]);
 const secure = cookie => cookie.filter(val => val.includes("Secure"));
 const notSecure = cookie => cookie.filter(val => !val.includes("Secure"));
 
-const selectDomain = R.curry((origDomain, cookie) => 
+const selectDomain = (origDomain, cookie) => 
   cookie.filter(val => {
     const domainDir = val.match(/domain=.*?;|domain=.*$/i);
     const coverDomain = domainDir ?
@@ -38,29 +37,21 @@ const selectDomain = R.curry((origDomain, cookie) =>
  
     return val.includes("domain=" + origDomain + ":coverNull") ||
       new RegExp(".*" + coverDomain, "i").test(origDomain);
-}));
+});
 
-const selectPath = R.curry((path, cookie) => 
+const selectPath = (path, cookie) => 
   cookie.filter(val => {
     const pathDir = val.match(/path=\/.*?;|path=\/.*$/i);
     const cookiePath = pathDir ? 
       pathDir[0].replace(/path=|;|$/ig, "") : "/";
 
     return new RegExp(cookiePath + ".*", "i").test(path);
-}));
+});
 
 // set domain with ;coverNull flag for cookies without Domain directive
 const setDomain = (origDomain, cookie) =>
   cookie.map(val => !val.toLowerCase().includes("domain=") ?
     val.concat(";domain=", origDomain, ";coverNull") : val);
-
-const readAllCookie = () => {
-  if (!fs.existsSync(cookieDir)) { 
-    fs.mkdirSync(cookieDir);
-  }
-
-  return fs.readdirSync(cookieDir);
-};
 
 const getCookie = uri => {
   const uriStr = url.parse(uri);
@@ -75,6 +66,14 @@ const getCookie = uri => {
     fs.readFileSync(path.join(cookieDir, val)).toString().split("*****").
       filter(val => !val.includes("coverNull")))));
 };
+
+function readAllCookie () {
+  if (!fs.existsSync(cookieDir)) { 
+    fs.mkdirSync(cookieDir);
+  }
+
+  return fs.readdirSync(cookieDir);
+}
 
 const saveCookie = (domain, cookie) => {
   const cookieFile = path.join(__dirname, "cookies", domain);
@@ -113,6 +112,5 @@ module.exports = {
   setDomain: R.curry(setDomain),
   getCookie: getCookie,
   saveCookie: R.curry(saveCookie),
-  clearCookie: clearCookie,
-  readAllCookie: readAllCookie
+  clearCookie: clearCookie
 };
