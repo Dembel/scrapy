@@ -6,7 +6,7 @@ const url = require("url");
 const cookieDir = path.join(__dirname, "cookies");
 
 // remove leading dot in Domain attribute value
-const dotFree = cookie => cookie.map(val => val.replace("omain=.", "omain="));
+const rmLeadingDot = cookie => cookie.map(val => val.replace("omain=.", "omain="));
 
 const rmDublicates = cookie => {
   const filtered = cookie.reduceRight((acc, val) => {
@@ -96,20 +96,9 @@ const clearCookie = () => {
     files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
   });
 };
-  
-const fetchValidCookies = uri => {
-  const uriStr = url.parse(uri);
-  const validate = R.compose(
-    selectPath(uriStr.path),
-    selectDomain(uriStr.hostanme),
-    parseCookie      
-  );
-
-  return validate(getCookie(uriStr.hostname) || []);
-};
 
 const parseCookie = R.compose(
-  dotFree,
+  rmLeadingDot,
   rmExpired,
   rmDublicates
 );
@@ -125,6 +114,5 @@ module.exports = {
   getCookie: getCookie,
   saveCookie: R.curry(saveCookie),
   clearCookie: clearCookie,
-  fetchValidCookies: fetchValidCookies,
   readAllCookie: readAllCookie
 };

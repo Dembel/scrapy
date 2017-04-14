@@ -3,7 +3,7 @@ const chai = require("chai");
 const expect = chai.expect;
 const cookie = require("../src/cookie");
 
-describe("Cookie parser tests", function () {
+describe("Cookie module tests", function () {
 
   it("should return an empty array", function () {
     /* jshint ignore:start */
@@ -25,6 +25,7 @@ describe("Cookie parser tests", function () {
 
     it("should correctly parse Expires", function () {
       const input = ["foo=bar", "bar=foo", "foobar=barf"];
+
       expect(cookie.parse(input)).to.eql(["foo=bar", "bar=foo", "foobar=barf"]);
     });
 
@@ -32,12 +33,12 @@ describe("Cookie parser tests", function () {
     function () {
       const date1 = new Date(9999, 12, 12).toUTCString();
       const date2 = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; Expires=" + date1,
         "bar=foo; Expires=" + date2,
         "foobar=barf; Expires=" + new Date(1990, 12, 12).toUTCString()
       ];
+
       expect(cookie.parse(input)).to.eql([
         "foo=bar; Expires=" + date1,
         "bar=foo; Expires=" + date2
@@ -46,12 +47,12 @@ describe("Cookie parser tests", function () {
 
     it("should correctly parse Expires", function () {
       const date = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; Expires=" + new Date().toUTCString() + "; path=/",
         "bar=foo; expires=" + date + "; path=/",
         "foob=bar; Expires=" + new Date(1990, 12, 12).toUTCString() + "; path=/"
       ];
+
       expect(cookie.parse(input)).to.eql([
         "bar=foo; expires=" + date + "; path=/"
       ]);
@@ -60,7 +61,6 @@ describe("Cookie parser tests", function () {
     it("should correctly parse Expires", function () {
       const date1 = new Date(9999, 12, 12).toUTCString();
       const date2 = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
         "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
@@ -68,6 +68,7 @@ describe("Cookie parser tests", function () {
         "foo=str; expires=" + date1,
         "bar=foor; Expires=" + date2
       ];
+
       expect(cookie.parse(input)).to.eql([
         "foo=str; expires=" + date1,
         "bar=foor; Expires=" + date2]);
@@ -76,7 +77,6 @@ describe("Cookie parser tests", function () {
     it("should correctly parse Expires", function () {
       const date1 = new Date(9999, 12, 12).toUTCString();
       const date2 = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
         "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
@@ -90,6 +90,7 @@ describe("Cookie parser tests", function () {
         "bar=gon",
         "bar=fobarfoo; expires=" + date2
       ];
+
       expect(cookie.parse(input)).to.eql([
         "john=dough; domain=foo.com",
         "foobarf=foo",
@@ -98,25 +99,26 @@ describe("Cookie parser tests", function () {
       ]);
     });
 
-    it("should correctly parse Expires and return name-value only",
+    it("should correctly parse Expires",
     function () {
       const date1 = new Date(9999, 12, 12).toUTCString();
       const date2 = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; Expires=" + date1,
         "bar=foo; Expires=" + date2,
         "foobar=barf; Expires=" + new Date(1990, 12, 12).toUTCString()
       ];
-      const parsed = cookie.parse(input);
-      expect(cookie.nameVal(parsed)).to.eql(["foo=bar", "bar=foo"]);
+
+      expect(cookie.parse(input)).to.eql([
+        "foo=bar; Expires=" + date1, 
+        "bar=foo; Expires=" + date2
+      ]);
     });
 
-    it("should correctly parse Expires and return name-value only",
+    it("should correctly parse Expires",
     function () {
       const date1 = new Date(9999, 12, 12).toUTCString();
       const date2 = new Date(5000, 12, 12).toUTCString();
-
       const input = [
         "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
         "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
@@ -130,11 +132,35 @@ describe("Cookie parser tests", function () {
         "bar=gon",
         "bar=fobarfoo; expires=" + date2
       ];
-      const parsed = cookie.parse(input);
-      expect(cookie.nameVal(parsed)).to.eql([
-        "john=dough",
+
+      expect(cookie.parse(input)).to.eql([
+        "john=dough; domain=foo.com",
         "foobarf=foo",
-        "foo=barfoo",
+        "foo=barfoo; expires=" + date1,
+        "bar=fobarfoo; expires=" + date2
+      ]);
+    });
+  });
+
+  describe("nameVal function tests", function () {
+  
+    it("should parse cookies and return name=value pairs only", function () {
+      const input = [
+        "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
+        "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
+        "foobar=barf; Expires=" + new Date(1990, 12, 12).toUTCString(),
+        "foo=str; expires=" + new Date(9999, 12, 12).toUTCString(),
+        "bar=foor; Expires=" + new Date(9999, 12, 12).toUTCString(),
+        "john=dough; domain=foo.com",
+        "foobarf=foo",
+        "foo=barfoo; path=/",
+        "bar=gon",
+        "bar=fobarfoo; domain=foo.bar; path=/; Secure"
+      ];
+      
+      expect(cookie.nameVal(input)).to.eql([
+        "foo=bar", "bar=foo", "foobar=barf", "foo=str", "bar=foor", 
+        "john=dough", "foobarf=foo", "foo=barfoo", "bar=gon",
         "bar=fobarfoo"
       ]);
     });
@@ -148,7 +174,8 @@ describe("Cookie parser tests", function () {
         "foobarf=foo; Domain=bar.ru; path=/",
         "foo=barfoo"
       ];
-        expect(cookie.selectDomain("foo.com", input)).to.eql([
+
+      expect(cookie.selectDomain("foo.com", input)).to.eql([
         "john=dough; domain=foo.com",
         "foo=barfoo"
       ]);
@@ -159,6 +186,7 @@ describe("Cookie parser tests", function () {
         "john=dough; Domain=foo.com",
         "foobarf=foo; Domain=bar.ru; path=/"
       ];
+
       expect(cookie.selectDomain("foo.com", input)).to.eql([
         "john=dough; Domain=foo.com"
       ]);
@@ -169,6 +197,7 @@ describe("Cookie parser tests", function () {
         "john=dough; Domain=foo.com; path=/",
         "foobarf=foo; Domain=bar.ru; path=/"
       ];
+
       expect(cookie.selectDomain("foo.com", input)).to.eql([
         "john=dough; Domain=foo.com; path=/"
       ]);
@@ -179,6 +208,7 @@ describe("Cookie parser tests", function () {
         "john=dough; domain=foo.com",
         "foobarf=foo; Domain=bar.ru; path=/"
       ];
+
       expect(cookie.selectDomain("bar.foo.com", input)).to.eql([
         "john=dough; domain=foo.com"
       ]);
@@ -190,6 +220,7 @@ describe("Cookie parser tests", function () {
         "foobarf=foo; Domain=bar.ru; path=/",
         "foobar=bar; path=/; domain=foobar.foo.com"
       ];
+
       expect(cookie.selectDomain("bar.foobar.foo.com", input)).to.eql([
         "john=dough; domain=foo.com",
         "foobar=bar; path=/; domain=foobar.foo.com"
@@ -202,6 +233,7 @@ describe("Cookie parser tests", function () {
         "foobarf=foo; Domain=bar.ru; path=/",
         "foobar=bar; path=/; domain=foo.com"
       ];
+
       expect(cookie.selectDomain("foobar.bar.foobar.foo.com", input)).to.eql([
         "john=dough; domain=foo.com",
         "foobar=bar; path=/; domain=foo.com"
@@ -215,6 +247,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=foo.com",
         "bar=foo; domain=foo.com:coverNull"
       ];
+
       expect(cookie.selectDomain("bar.foo.barfoo.foobar.bar.foobar.foo.com",
       input)).to.eql([
         "john=dough; domain=foo.com",
@@ -229,6 +262,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=foo.com",
         "bar=foo; domain=foo.com:coverNull"
       ];
+
       expect(cookie.selectDomain("foo.com", input)).to.eql([
         "foobar=bar; path=/; domain=foo.com",
         "bar=foo; domain=foo.com:coverNull"
@@ -242,6 +276,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=foo.com",
         "bar=foo; domain=www.foobar.foo.com:coverNull"
       ];
+
       expect(cookie.selectDomain("foobar.foo.com", input)).to.eql([
         "john=dough; domain=foobar.foo.com",
         "foobar=bar; path=/; domain=foo.com"
@@ -255,6 +290,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=foo.com",
         "bar=foo; domain=foobar.foo.com:coverNull"
       ];
+
       expect(cookie.selectDomain("foobar.foo.com", input)).to.eql([
         "john=dough; domain=foobar.foo.com",
         "foobar=bar; path=/; domain=foo.com",
@@ -268,6 +304,7 @@ describe("Cookie parser tests", function () {
         "foobarf=foo; Domain=bar.ru; path=/",
         "foobar=bar; path=/; domain=barfoo.com"
       ];
+
       expect(cookie.selectDomain("foobar.foo.com", input)).to.eql([
         "john=dough; domain=foobar.foo.com"
       ]);
@@ -281,6 +318,7 @@ describe("Cookie parser tests", function () {
         "foo=barf; domain=foo.bar.foobar.foo.com",
         "foobar=bar; path=/; domain=barfoo.com"
       ];
+
       expect(cookie.selectDomain("bar.foobar.foo.com", input)).to.eql([
         "john=dough; domain=foobar.foo.com",
         "foo=barfo; domain=foo.com"
@@ -295,6 +333,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=.foo.com",
         "bar=foo; domain=www.foobar.foo.com:coverNull"
       ]);
+
       expect(cookie.selectDomain("foobar.foo.com", input)).to.eql([
         "john=dough; domain=foobar.foo.com",
         "foobar=bar; path=/; domain=foo.com"
@@ -309,12 +348,17 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=.foo.com",
         "bar=foo; domain=www.foobar.foo.com:coverNull"
       ]);
+
       expect(cookie.selectDomain("foobar.foo.com", input)).to.eql([
         "john=dough; Domain=foobar.foo.com",
         "foobar=bar; path=/; domain=foo.com"
       ]);
     });
 
+  });
+
+  describe("setDomain function tests", function () {
+  
     it("should set cookie domain with :coverNull tag" +
     " if there's no cover domain", function () {
       const input = [
@@ -323,6 +367,7 @@ describe("Cookie parser tests", function () {
         "foobar=bar; path=/; domain=barfoo.com",
         "barr=fobar"
       ];
+
       expect(cookie.setDomain("bar.foobar.foo.com", input)).to.eql([
         "foobarf=foo; Domain=bar.ru; path=/",
         "foo=barfo;domain=bar.foobar.foo.com;coverNull",
@@ -330,7 +375,7 @@ describe("Cookie parser tests", function () {
         "barr=fobar;domain=bar.foobar.foo.com;coverNull"
       ]);
     });
-
+  
   });
 
   describe("Path directive tests", function () {
