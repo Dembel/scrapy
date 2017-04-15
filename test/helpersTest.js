@@ -66,7 +66,8 @@ describe("Helpers tests", function () {
   });
 
   describe("log function tests", function () {
-  
+    const logsDir = process.env.PWD + "/src/logs";
+
     beforeEach(function () {
       this.sandbox = sinon.sandbox.create();
     });
@@ -85,7 +86,7 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/foobar.com.log");
+      sinon.assert.calledWith(writeFileStub, logsDir + "/foobar.com.log");
     });
 
     it("should save POST request log into a file", function () {
@@ -98,7 +99,7 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log");
+      sinon.assert.calledWith(writeFileStub, logsDir + "/bar.com.log");
     });
 
     it("should save POST request log into a file", function () {
@@ -111,7 +112,23 @@ describe("Helpers tests", function () {
       helpers.log(res);
 
       sinon.assert.calledOnce(writeFileStub);
-      sinon.assert.calledWith(writeFileStub, "src/logs/bar.com.log");
+      sinon.assert.calledWith(writeFileStub, logsDir + "/bar.com.log");
+    });
+
+    it("should create logs directory if it's not exist before saving log",
+    function () {
+      const res = { req: { hostname: "bar.com" } };
+      const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
+      const writeFileStub = this.sandbox.stub(fs, "writeFile");
+
+      if (fs.existsSync(logsDir)) { 
+        fs.rmdirSync(logsDir);
+      }
+
+      helpers.log(res);
+
+      sinon.assert.calledOnce(writeFileStub);
+      sinon.assert.calledOnce(mkdirSyncStub);
     });
 
   });

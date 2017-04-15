@@ -4,6 +4,7 @@ const url = require("url");
 
 // log request and response into a file
 const log = res => {
+  const logsDir = process.env.PWD + "/src/logs";
   const fs = require("fs");
   const statusCodes = require("./config").statusCodes;
   const protocol = res.req.protocol === "http" ? "HTTP/1.1" : "HTTPS";
@@ -22,12 +23,12 @@ const log = res => {
     "============================================================", "\n\n"
   );
   
-  if (!fs.existsSync("src/logs")) { 
-    fs.mkdirSync("src/logs");
+  if (!fs.existsSync(logsDir)) { 
+    fs.mkdirSync(logsDir);
   }
 
   fs.writeFile(
-    "src/logs/" + res.req.hostname + ".log", 
+    logsDir + "/" + res.req.hostname + ".log", 
     logData, 
     {flag: "a"}, () => {}
   );

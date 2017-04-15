@@ -1,13 +1,17 @@
 "use strict";
 const chai = require("chai");
 const expect = chai.expect;
+const sinon = require("sinon");
+const fs = require("fs");
 const cookie = require("../src/cookie");
+const cookieDir = process.env.PWD + "/src/cookies";
 
 describe("Cookie module tests", function () {
 
   it("should return an empty array", function () {
     /* jshint ignore:start */
     const input = [];
+
     expect(cookie.parse(input)).to.be.empty;
     /* jshint ignore:end */
   });
@@ -19,6 +23,7 @@ describe("Cookie module tests", function () {
       const input = [
         "foo=bar; expires=" + new Date(1980, 12, 12).toUTCString(),
         "bar=fo; expires=" + new Date(1970, 12, 12).toUTCString() + "; path=/"];
+
       expect(cookie.parse(input)).to.be.empty;
       /* jshint ignore:end */
     });
@@ -138,30 +143,6 @@ describe("Cookie module tests", function () {
         "foobarf=foo",
         "foo=barfoo; expires=" + date1,
         "bar=fobarfoo; expires=" + date2
-      ]);
-    });
-  });
-
-  describe("nameVal function tests", function () {
-  
-    it("should parse cookies and return name=value pairs only", function () {
-      const input = [
-        "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
-        "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
-        "foobar=barf; Expires=" + new Date(1990, 12, 12).toUTCString(),
-        "foo=str; expires=" + new Date(9999, 12, 12).toUTCString(),
-        "bar=foor; Expires=" + new Date(9999, 12, 12).toUTCString(),
-        "john=dough; domain=foo.com",
-        "foobarf=foo",
-        "foo=barfoo; path=/",
-        "bar=gon",
-        "bar=fobarfoo; domain=foo.bar; path=/; Secure"
-      ];
-      
-      expect(cookie.nameVal(input)).to.eql([
-        "foo=bar", "bar=foo", "foobar=barf", "foo=str", "bar=foor", 
-        "john=dough", "foobarf=foo", "foo=barfoo", "bar=gon",
-        "bar=fobarfoo"
       ]);
     });
   });
@@ -357,27 +338,6 @@ describe("Cookie module tests", function () {
 
   });
 
-  describe("setDomain function tests", function () {
-  
-    it("should set cookie domain with :coverNull tag" +
-    " if there's no cover domain", function () {
-      const input = [
-        "foobarf=foo; Domain=bar.ru; path=/",
-        "foo=barfo",
-        "foobar=bar; path=/; domain=barfoo.com",
-        "barr=fobar"
-      ];
-
-      expect(cookie.setDomain("bar.foobar.foo.com", input)).to.eql([
-        "foobarf=foo; Domain=bar.ru; path=/",
-        "foo=barfo;domain=bar.foobar.foo.com;coverNull",
-        "foobar=bar; path=/; domain=barfoo.com",
-        "barr=fobar;domain=bar.foobar.foo.com;coverNull"
-      ]);
-    });
-  
-  });
-
   describe("Path directive tests", function () {
 
     it("should return cookies with valid Path directive", function () {
@@ -481,8 +441,8 @@ describe("Cookie module tests", function () {
       ]);
     });
 
-    it("should consider path to be \"/\" if there's no Path directive\n\t" +
-    "or if it's not valid", function () {
+    it("should consider path to be \"/\" if there's no Path directive" +
+    " or if it's not valid", function () {
       const input = [
         "foobarf=foo; Domain=bar.ru; path=foo",
         "foo=barfo; path=/foo/bar",
@@ -523,6 +483,191 @@ describe("Cookie module tests", function () {
       expect(cookie.notSecure(input)).to.eql([
         "foobarf=foo; Domain=bar.ru; path=foo",
         "barr=fobar"
+      ]);
+    });
+
+  });
+
+  describe("nameVal function tests", function () {
+  
+    it("should parse cookies and return name=value pairs only", function () {
+      const input = [
+        "foo=bar; expires=" + new Date(9999, 12, 12).toUTCString(),
+        "bar=foo; Expires=" + new Date(5000, 12, 12).toUTCString(),
+        "foobar=barf; Expires=" + new Date(1990, 12, 12).toUTCString(),
+        "foo=str; expires=" + new Date(9999, 12, 12).toUTCString(),
+        "bar=foor; Expires=" + new Date(9999, 12, 12).toUTCString(),
+        "john=dough; domain=foo.com",
+        "foobarf=foo",
+        "foo=barfoo; path=/",
+        "bar=gon",
+        "bar=fobarfoo; domain=foo.bar; path=/; Secure"
+      ];
+      
+      expect(cookie.nameVal(input)).to.eql([
+        "foo=bar", "bar=foo", "foobar=barf", "foo=str", "bar=foor", 
+        "john=dough", "foobarf=foo", "foo=barfoo", "bar=gon",
+        "bar=fobarfoo"
+      ]);
+    });
+  });
+
+  describe("setDomain function tests", function () {
+  
+    it("should set cookie domain with :coverNull tag" +
+    " if there's no cover domain", function () {
+      const input = [
+        "foobarf=foo; Domain=bar.ru; path=/",
+        "foo=barfo",
+        "foobar=bar; path=/; domain=barfoo.com",
+        "barr=fobar"
+      ];
+
+      expect(cookie.setDomain("bar.foobar.foo.com", input)).to.eql([
+        "foobarf=foo; Domain=bar.ru; path=/",
+        "foo=barfo;domain=bar.foobar.foo.com;coverNull",
+        "foobar=bar; path=/; domain=barfoo.com",
+        "barr=fobar;domain=bar.foobar.foo.com;coverNull"
+      ]);
+    });
+  
+  });
+
+  describe("saveCookie function tests", function () {
+
+    beforeEach(function () {
+      this.sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      this.sandbox.restore();
+    });
+
+    it("should save cookie into a file", function () {
+      const writeFileSyncStub = this.sandbox.stub(fs, "writeFileSync");
+      const cookieArray = [
+        "bar=foo;domain=bar.foo.com",
+        "barfoo=foo;domain=bar.foo.com",
+      ];
+
+      cookie.saveCookie("bar.foo.com", cookieArray);
+
+      sinon.assert.calledOnce(writeFileSyncStub);
+      sinon.assert.calledWith(
+        writeFileSyncStub, 
+        cookieDir + "/bar.foo.com",
+        "bar=foo;domain=bar.foo.com*****barfoo=foo;domain=bar.foo.com"
+      );
+    });
+
+    it("should not save anything if passed cookieArray is empty", function () {
+      const writeFileSyncStub = this.sandbox.stub(fs, "writeFileSync");
+      const cookieArray = [];
+
+      cookie.saveCookie("bar.foo.com", cookieArray);
+
+      sinon.assert.notCalled(writeFileSyncStub);
+    });
+
+    it("should create coookie directory if it's not exist before saving cookie",
+    function () {
+      const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
+      const writeFileSyncStub = this.sandbox.stub(fs, "writeFileSync");
+      const cookieArray = ["foo=bar;domain=bar.foo.com"];
+
+      if (fs.existsSync(cookieDir)) { 
+        fs.rmdirSync(cookieDir);
+      }
+
+      cookie.saveCookie("bar.foo.com", cookieArray);
+
+      sinon.assert.calledOnce(writeFileSyncStub);
+      sinon.assert.calledOnce(mkdirSyncStub);
+    });
+
+  });
+
+  describe("clearCookie function tests", function () {
+
+    beforeEach(function () {
+      this.sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      this.sandbox.restore();
+    });
+
+    it("should remove all cookie files from cookie directory", function () {
+      const readdirSyncStub = this.sandbox.stub(fs, "readdirSync");
+      const unlinkStub = this.sandbox.stub(fs, "unlink");
+      const cookieFiles = ["foo=bar", "bar=foo", "foobar=bar"];
+
+      readdirSyncStub.withArgs(cookieDir).returns(cookieFiles);
+      cookie.clearCookie();
+
+      sinon.assert.calledThrice(unlinkStub);
+      sinon.assert.callOrder(
+        unlinkStub.withArgs(cookieDir + "/foo=bar"),
+        unlinkStub.withArgs(cookieDir + "/bar=foo"),
+        unlinkStub.withArgs(cookieDir + "/foobar=bar")
+      );
+    });
+
+    it("should do nothing if cookie dir is empty", function () {
+      const readdirSyncStub = this.sandbox.stub(fs, "readdirSync");
+      const unlinkStub = this.sandbox.stub(fs, "unlink");
+
+      readdirSyncStub.withArgs(cookieDir).returns([]);
+      cookie.clearCookie();
+
+      sinon.assert.notCalled(unlinkStub);
+    });
+
+  });
+
+  describe("getCookie function tests", function () {
+
+    beforeEach(function () {
+      this.sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      this.sandbox.restore();
+    });
+
+    it("should return an empty array if no cookie was found", function () {
+      const readdirSyncStub = this.sandbox.stub(fs, "readdirSync");
+
+      readdirSyncStub.withArgs(cookieDir).returns([]);
+
+      const result = cookie.getCookie("http://foo.com/bar");
+
+      sinon.assert.calledOnce(readdirSyncStub);
+      expect(result).to.eql([]);
+    });
+
+    it("should return an array of cookie when given the req uri", function () {
+      const readdirSyncStub = this.sandbox.stub(fs, "readdirSync");
+      const readFileSyncStub = this.sandbox.stub(fs, "readFileSync");
+      const cookie1 = "foo=bar;domain=foo.com*****" + 
+        "bar=foo;domain=foo.com;path=/john*****" +
+        "bar=foobar;domain=foo.com;coverNull;path=/bar";
+      const cookie2 = "bar=foob;domain=bar.net;coverNull;path=/";
+
+      readdirSyncStub.withArgs(cookieDir).returns(["foo.com", "bar.net"]);
+      readFileSyncStub.withArgs(cookieDir + "/foo.com").returns(cookie1);
+      readFileSyncStub.withArgs(cookieDir + "/bar.net").returns(cookie2);
+
+      const result1 = cookie.getCookie("http://foo.com/bar");
+      const result2 = cookie.getCookie("http://bar.net/bar");
+
+      sinon.assert.calledTwice(readFileSyncStub);
+      expect(result1).to.eql([
+        "foo=bar;domain=foo.com",
+        "bar=foobar;domain=foo.com;coverNull;path=/bar"
+      ]);
+      expect(result2).to.eql([
+        "bar=foob;domain=bar.net;coverNull;path=/"
       ]);
     });
 

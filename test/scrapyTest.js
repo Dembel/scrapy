@@ -210,13 +210,6 @@ describe("Scrapy tests", function () {
       });
     });
 
-    xit("should throw Unsoported protocol, expected http: or https:", 
-    function () {
-      const fn = () => scrapy.get("htps://gettest.com:8080/#start", () => {});
-      const err = "Unsoported protocol, expected http: or https:";
-      expect(fn).to.throw(Error, err);
-    });
-
   });
 
   describe("POST method tests" , function () {
@@ -355,13 +348,6 @@ describe("Scrapy tests", function () {
         expect(res.statusCodeMessage).to.equal("OK");
         done();
       });
-    });
-
-    xit("should throw Unsoported protocol, expected http: or https:", 
-    function () {
-      const fn = () => scrapy.post("htps://posttest.com", {}, () => {});
-      const err = "Unsoported protocol, expected http: or https:";
-      expect(fn).to.throw(Error, err);
     });
 
   });

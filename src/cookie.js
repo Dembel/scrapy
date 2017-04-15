@@ -91,9 +91,9 @@ const clearCookie = () => {
     fs.mkdirSync(cookieDir);
   }
 
-  fs.readdir(cookieDir, (err, files) => {
-    files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
-  });
+  const files = fs.readdirSync(cookieDir);
+    
+  files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
 };
 
 const parseCookie = R.compose(
