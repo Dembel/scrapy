@@ -5,13 +5,14 @@
   "main": "./src/scraper.js",
   "scripts": {
     "test": "mocha",
-    "build": "jshint src/*.js test/*.js && nyc mocha"
+    "build": "jshint src/*.js test/*.js && jsinspect src/*.js && nyc mocha"
   },
   "author": "Dmitry Lukashevich",
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
     "jshint": "^2.9.4",
+    "jsinspect": "^0.12.4",
     "mocha": "^3.2.0",
     "nock": "^9.0.2",
     "nyc": "^10.2.0",
