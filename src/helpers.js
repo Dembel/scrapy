@@ -1,11 +1,12 @@
 "use strict";
 
 const url = require("url");
+const fs = require("fs");
 
-// log request and response into a file
+
+// log response into a file
 const log = res => {
   const logsDir = process.env.PWD + "/src/logs";
-  const fs = require("fs");
   const statusCodes = require("./config").statusCodes;
   const protocol = res.req.protocol === "http" ? "HTTP/1.1" : "HTTPS";
   const reqHeaders = JSON.stringify(res.req.headers, null, 2);

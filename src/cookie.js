@@ -68,33 +68,33 @@ const getCookie = uri => {
 };
 
 function readAllCookie () {
-  if (!fs.existsSync(cookieDir)) { 
-    fs.mkdirSync(cookieDir);
-  }
+  prepareFolder(cookieDir);
 
   return fs.readdirSync(cookieDir);
 }
 
 const saveCookie = (domain, cookie) => {
-  const cookieFile = path.join(__dirname, "cookies", domain);
+  const cookieFileName = path.join(__dirname, "cookies", domain);
+  
+  prepareFolder(cookieDir);
 
-    if (fs.existsSync(path.join(__dirname, "cookies")) && cookie.length) {
-    fs.writeFileSync(cookieFile, cookie.join("*****"));
-  } else if (cookie.length) {
-    fs.mkdirSync(path.join(__dirname, "cookies"));
-    fs.writeFileSync(cookieFile, cookie.join("*****"));
+  if (cookie.length) {
+    fs.writeFileSync(cookieFileName, cookie.join("*****"));
   }
 };
 
 const clearCookie = () => {
-  if (!fs.existsSync(cookieDir)) {
-    fs.mkdirSync(cookieDir);
-  }
-
+  prepareFolder(cookieDir);
   const files = fs.readdirSync(cookieDir);
     
   files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
 };
+
+function prepareFolder(path) {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path);
+  }
+}
 
 const parseCookie = R.compose(
   rmLeadingDot,

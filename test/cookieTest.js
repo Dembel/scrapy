@@ -569,16 +569,15 @@ describe("Cookie module tests", function () {
       sinon.assert.notCalled(writeFileSyncStub);
     });
 
-    it("should create coookie directory if it's not exist before saving cookie",
+    it("should create coookie directory if it doesn't exist",
     function () {
       const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
       const writeFileSyncStub = this.sandbox.stub(fs, "writeFileSync");
+      const existsSyncStub = this.sandbox.stub(fs, "existsSync");
       const cookieArray = ["foo=bar;domain=bar.foo.com"];
 
-      if (fs.existsSync(cookieDir)) { 
-        fs.rmdirSync(cookieDir);
-      }
-
+      existsSyncStub.withArgs().returns(false);
+      
       cookie.saveCookie("bar.foo.com", cookieArray);
 
       sinon.assert.calledOnce(writeFileSyncStub);
@@ -658,17 +657,53 @@ describe("Cookie module tests", function () {
       readFileSyncStub.withArgs(cookieDir + "/foo.com").returns(cookie1);
       readFileSyncStub.withArgs(cookieDir + "/bar.net").returns(cookie2);
 
-      const result1 = cookie.getCookie("http://foo.com/bar");
-      const result2 = cookie.getCookie("http://bar.net/bar");
+      const result = cookie.getCookie("http://foo.com/bar");
 
-      sinon.assert.calledTwice(readFileSyncStub);
-      expect(result1).to.eql([
+      sinon.assert.calledOnce(readFileSyncStub);
+      expect(result).to.eql([
         "foo=bar;domain=foo.com",
         "bar=foobar;domain=foo.com;coverNull;path=/bar"
       ]);
-      expect(result2).to.eql([
-        "bar=foob;domain=bar.net;coverNull;path=/"
+    });
+
+    it("should return an array of cookie when given the req uri", function () {
+      const readdirSyncStub = this.sandbox.stub(fs, "readdirSync");
+      const readFileSyncStub = this.sandbox.stub(fs, "readFileSync");
+      const cookie1 = "foo=bar;domain=foo.com*****" + 
+        "bar=foo;domain=foo.com;path=/john*****" +
+        "bar=foobar;domain=foo.com;coverNull;path=/bar";
+      const cookie2 = "bar=barfoo;domain=bar.foo.com;path=/bar*****" +
+        "barbar=foofoo;domain=bar.foo.com;coverNull";
+      const cookie3 = "bar=foob;domain=bar.net;coverNull;path=/";
+
+      readdirSyncStub.withArgs(cookieDir).returns([
+        "bar.foo.com", "foo.com", "bar.net"
       ]);
+
+      readFileSyncStub.withArgs(cookieDir + "/foo.com").returns(cookie1);
+      readFileSyncStub.withArgs(cookieDir + "/bar.foo.com").returns(cookie2);
+      readFileSyncStub.withArgs(cookieDir + "/bar.net").returns(cookie3);
+
+      const result = cookie.getCookie("http://foo.com/bar");
+
+      sinon.assert.calledTwice(readFileSyncStub);
+      expect(result).to.eql([
+        "bar=barfoo;domain=bar.foo.com;path=/bar",
+        "foo=bar;domain=foo.com",
+        "bar=foobar;domain=foo.com;coverNull;path=/bar"
+      ]);
+    });
+
+    it("should create coookie directory if it doesn't exist",
+    function () {
+      const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
+      const existsSyncStub = this.sandbox.stub(fs, "existsSync");
+
+      existsSyncStub.withArgs().returns(false);
+      
+      cookie.getCookie("http://bar.foo.com");
+
+      sinon.assert.calledOnce(mkdirSyncStub);
     });
 
   });

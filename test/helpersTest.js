@@ -62,6 +62,17 @@ describe("Helpers tests", function () {
         expect(result.path).to.equal("/bar?foo=bar&bar=foo#foobar");
         expect(result.port).to.equal("443");
     });
+
+    it("should extract protocol as http: if there's no protocol in uri string",
+      function () {
+        const uri = "bar.com:443/bar?foo=bar&bar=foo#foobar";
+        const result = helpers.parseUri(uri);
+
+        expect(result.protocol).to.equal("http:");
+        expect(result.hostname).to.equal("bar.com");
+        expect(result.path).to.equal("/bar?foo=bar&bar=foo#foobar");
+        expect(result.port).to.equal("443");
+    });
     
   });
 
@@ -115,19 +126,16 @@ describe("Helpers tests", function () {
       sinon.assert.calledWith(writeFileStub, logsDir + "/bar.com.log");
     });
 
-    it("should create logs directory if it's not exist before saving log",
+    it("should create logs directory if it does not exist before saving log",
     function () {
       const res = { req: { hostname: "bar.com" } };
       const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
-      const writeFileStub = this.sandbox.stub(fs, "writeFile");
+      const existsSyncStub = this.sandbox.stub(fs, "existsSync");
 
-      if (fs.existsSync(logsDir)) { 
-        fs.rmdirSync(logsDir);
-      }
+      existsSyncStub.withArgs().returns(false);
 
       helpers.log(res);
 
-      sinon.assert.calledOnce(writeFileStub);
       sinon.assert.calledOnce(mkdirSyncStub);
     });
 
