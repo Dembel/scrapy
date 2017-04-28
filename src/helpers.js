@@ -3,7 +3,6 @@
 const url = require("url");
 const fs = require("fs");
 
-
 // log response into a file
 const log = res => {
   const logsDir = process.env.PWD + "/src/logs";
@@ -24,9 +23,7 @@ const log = res => {
     "============================================================", "\n\n"
   );
   
-  if (!fs.existsSync(logsDir)) { 
-    fs.mkdirSync(logsDir);
-  }
+  mkdirIfDoesNotExist(logsDir);
 
   fs.writeFile(
     logsDir + "/" + res.req.hostname + ".log", 
@@ -34,6 +31,12 @@ const log = res => {
     {flag: "a"}, () => {}
   );
 };
+
+function mkdirIfDoesNotExist(path) {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path);
+  }
+}
 
 const parseUri = uri => {
   const correctedUri = uri.includes("://") ? uri : "http://" + uri;
@@ -49,5 +52,6 @@ const parseUri = uri => {
 
 module.exports = {
   log: log,
-  parseUri: parseUri
+  parseUri: parseUri,
+  mkdirIfDoesNotExist: mkdirIfDoesNotExist
 };

@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const R = require("ramda");
 const url = require("url");
+const mkdirIfDoesNotExist = require("./helpers").mkdirIfDoesNotExist;
 const cookieDir = path.join(__dirname, "cookies");
 
 const rmLeadingDot = cookie => cookie.map(val => val.replace("omain=.", "omain="));
@@ -29,7 +30,7 @@ const nameVal = cookie => cookie.map(val => val.split(";")[0]);
 const secure = cookie => cookie.filter(val => val.includes("Secure"));
 const notSecure = cookie => cookie.filter(val => !val.includes("Secure"));
 
-const selectDomain = (origDomain, cookie) => 
+const selectDomain = R.curry((origDomain, cookie) => 
   cookie.filter(val => {
     const domainDir = val.match(/domain=.*?;|domain=.*$/i);
     const coverDomain = domainDir ?
@@ -37,16 +38,16 @@ const selectDomain = (origDomain, cookie) =>
  
     return val.includes("domain=" + origDomain + ":coverNull") ||
       new RegExp(".*" + coverDomain, "i").test(origDomain);
-});
+}));
 
-const selectPath = (path, cookie) => 
+const selectPath = R.curry((path, cookie) => 
   cookie.filter(val => {
     const pathDir = val.match(/path=\/.*?;|path=\/.*$/i);
     const cookiePath = pathDir ? 
       pathDir[0].replace(/path=|;|$/ig, "") : "/";
 
     return new RegExp(cookiePath + ".*", "i").test(path);
-});
+}));
 
 // set domain with ;coverNull flag for cookies without Domain directive
 const setDomain = (origDomain, cookie) =>
@@ -55,28 +56,38 @@ const setDomain = (origDomain, cookie) =>
 
 const getCookie = uri => {
   const uriStr = url.parse(uri);
-  const domain = uriStr.hostname;
-  const uriPath = uriStr.path;
   const cookieFiles = readAllCookie().filter(
-    val => new RegExp("(.+\.)*" + domain + "$").test(val)
+    val => new RegExp("(.+\.)*" + uriStr.hostname + "$").test(val)
   );
 
-  return selectPath(uriPath, R.flatten(cookieFiles.map(val => val === domain ? 
-    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****") :
-    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****").
-      filter(val => !val.includes("coverNull")))));
+  return filterValidCookies(uriStr, cookieFiles);
 };
 
 function readAllCookie () {
-  prepareFolder(cookieDir);
+  mkdirIfDoesNotExist(cookieDir);
 
   return fs.readdirSync(cookieDir);
+}
+
+function filterValidCookies(uri, cookies) {
+  const filterDomains = val => val === uri.hostname ? 
+    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****") :
+    fs.readFileSync(path.join(cookieDir, val)).toString().split("*****").
+      filter(val => !val.includes("coverNull"));
+
+  const validate = R.compose(
+    selectPath(uri.path),
+    R.flatten,
+    R.map(filterDomains)
+  );
+
+  return validate(cookies);
 }
 
 const saveCookie = (domain, cookie) => {
   const cookieFileName = path.join(__dirname, "cookies", domain);
   
-  prepareFolder(cookieDir);
+  mkdirIfDoesNotExist(cookieDir);
 
   if (cookie.length) {
     fs.writeFileSync(cookieFileName, cookie.join("*****"));
@@ -84,17 +95,11 @@ const saveCookie = (domain, cookie) => {
 };
 
 const clearCookie = () => {
-  prepareFolder(cookieDir);
+  mkdirIfDoesNotExist(cookieDir);
   const files = fs.readdirSync(cookieDir);
     
   files.forEach(val => fs.unlink(path.join(cookieDir, val), () => {}));
 };
-
-function prepareFolder(path) {
-  if (!fs.existsSync(path)) {
-    fs.mkdirSync(path);
-  }
-}
 
 const parseCookie = R.compose(
   rmLeadingDot,

@@ -141,4 +141,38 @@ describe("Helpers tests", function () {
 
   });
 
+  describe("mkdirIfDoesNotExist function tests", function () {
+    
+    beforeEach(function () {
+      this.sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      this.sandbox.restore();
+    });
+
+   it("should create new folder it it does not exist", function () {
+     const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
+     const existsSyncStub = this.sandbox.stub(fs, "existsSync");
+
+     existsSyncStub.withArgs("foobar").returns(false);
+     
+     helpers.mkdirIfDoesNotExist("foobar");
+
+     sinon.assert.calledOnce(mkdirSyncStub);
+   });
+
+   it("should do nothing if folder exist", function () {
+     const mkdirSyncStub = this.sandbox.stub(fs, "mkdirSync");
+     const existsSyncStub = this.sandbox.stub(fs, "existsSync");
+
+     existsSyncStub.withArgs("foobar").returns(true);
+     
+     helpers.mkdirIfDoesNotExist("foobar");
+
+     sinon.assert.notCalled(mkdirSyncStub);
+   });
+
+  });
+
 });
